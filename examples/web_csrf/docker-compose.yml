@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  cert-generator:
+    image: alpine:latest
+    volumes:
+      - shared-certs:/shared/ssl
+      - ./create-ca-certs.sh:/tmp/create-ca-certs.sh
+      - ./certs:/host-certs
+    working_dir: /
+    command: >
+      sh -c "
+        apk add --no-cache openssl &&
+        chmod +x /tmp/create-ca-certs.sh &&
+        sh /tmp/create-ca-certs.sh /shared/ssl &&
+        cp /shared/ssl/ca.crt /host-certs/ca.crt &&
+        echo 'CA certificate available at ./certs/ca.crt - install this in your browser!' &&
+        echo 'Certificate generation complete.'"
+    container_name: cert-generator
+
+  no-cors-api:
+    build:
+      context: ./services/no-cors-api
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+      - shared-certs:/app/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: no-cors-api
+    restart: unless-stopped
+
+  vulnerable-api:
+    build:
+      context: ./services/vulnerable-api
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+      - shared-certs:/app/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: vulnerable-api
+    restart: unless-stopped
+
+  cors-only-api:
+    build:
+      context: ./services/cors-only-api
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+      - shared-certs:/app/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: cors-only-api
+    restart: unless-stopped
+
+  protected-api:
+    build:
+      context: ./services/protected-api
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    volumes:
+      - ./logs:/app/logs
+      - shared-certs:/app/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: protected-api
+    restart: unless-stopped
+
+  teacher-portal:
+    build:
+      context: ./services/teacher-portal
+      dockerfile: Dockerfile  
+    ports:
+      - "8001:443"
+    volumes:
+      - ./services/teacher-portal/index.html:/usr/share/nginx/html/index.html:ro
+      - ./services/teacher-portal/legacy.html:/usr/share/nginx/html/legacy.html:ro
+      - shared-certs:/etc/nginx/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: teacher-portal-frontend
+    restart: unless-stopped
+
+  attacker-site:
+    build:
+      context: ./services/attacker-site
+      dockerfile: Dockerfile
+    ports:
+      - "8002:443"
+    volumes:
+      - ./services/attacker-site/index.html:/usr/share/nginx/html/index.html:ro
+      - shared-certs:/etc/nginx/ssl:ro
+    depends_on:
+      cert-generator:
+        condition: service_completed_successfully
+    container_name: malicious-edutools-site
+    restart: unless-stopped
+
+volumes:
+  shared-certs:

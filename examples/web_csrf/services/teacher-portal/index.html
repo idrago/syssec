@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Teacher Portal</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .api-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .api-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .vulnerable { border-left: 4px solid #e74c3c; }
+        .protected { border-left: 4px solid #27ae60; }
+        .cors-only { border-left: 4px solid #f39c12; }
+        
+        .login-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #1e3c72;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #2a5298;
+        }
+        button.dangerous {
+            background: #e74c3c;
+        }
+        button.dangerous:hover {
+            background: #c0392b;
+        }
+        .results {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .success { color: #27ae60; }
+        .error { color: #e74c3c; }
+        .warning { color: #f39c12; }
+        pre {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        .ssl-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #856404;
+        }
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            padding: 10px;
+            background: #f8f8f8;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .student-info {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>University Teacher Portal</h1>
+        <p>CSRF Security Demonstration Lab (HTTPS Enabled)</p>
+    </div>
+
+    <div class="api-grid">
+        <div class="api-card vulnerable">
+            <h3>Vulnerable API <br> (Port 3001)</h3>
+            <p><strong>Protection:</strong> None</p>
+            <p>CORS: Misconfigured (*)<br>
+            CSRF: None<br>
+            Cookies: Secure + SameSite=None</p>
+        </div>
+        <div class="api-card cors-only">
+            <h3>CORS-Only API <br> (Port 3002)</h3>
+            <p><strong>Protection:</strong> Partial</p>
+            <p>CORS: Restricted origins<br>
+            CSRF: None<br>
+            Cookies: HttpOnly + SameSite</p>
+        </div>
+        <div class="api-card protected">
+            <h3>Protected API <br> (Port 3004)</h3>
+            <p><strong>Protection:</strong> Full</p>
+            <p>CORS: Restricted origins<br>
+            CSRF: Required tokens<br>
+            Cookies: Secure</p>
+        </div>
+    </div>
+
+    <div class="login-form" id="login-actions" style="display: block;">
+        <h3>Teacher Login</h3>
+        <div class="form-group">
+            <label for="api-select">Select API:</label>
+            <select id="api-select">
+                <option value="https://localhost:3001">Vulnerable API (3001) - HTTPS</option>
+                <option value="https://localhost:3002">CORS-Only API (3002) - HTTPS</option>
+                <option value="https://localhost:3003">Protected API (3003) - HTTPS</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="teacher-id">Teacher ID:</label>
+            <input type="text" id="teacher-id" value="teacher123" placeholder="teacher123 (use any teacherXXX)">
+        </div>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" value="password123" placeholder="password123">
+        </div>
+        <button onclick="login()">Login</button>
+        <button onclick="checkStatus()">Check API Status</button>
+    </div>
+
+    <div class="login-form" id="student-actions" style="display: none;">
+        <h3>Student Management</h3>
+        <div class="form-group">
+            <label for="target-student">Select Student:</label>
+            <select id="target-student">
+                <option value="">Loading students...</option>
+            </select>
+            <div id="student-info" class="student-info" style="display: none;"></div>
+        </div>
+        
+        <div class="form-group">
+            <label for="course-grade">Update Grade for Enrolled Course:</label>
+            <select id="course-grade">
+                <option value="">Select a student first</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="new-grade">New Grade:</label>
+            <select id="new-grade">
+                <option value="A">A</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B">B</option>
+                <option value="B-">B-</option>
+                <option value="C+">C+</option>
+                <option value="C">C</option>
+                <option value="F">F</option>
+            </select>
+        </div>
+        <button onclick="changeGrade()">Update Student Grade</button>
+        <button onclick="getProfile()">View Student Profile</button>
+        
+        <div class="form-group">
+            <label for="register-course">Enroll Student in New Course:</label>
+            <select id="register-course">
+                <option value="">Select a student first</option>
+            </select>
+        </div>
+        <button onclick="registerCourse()">Enroll Student</button>
+    </div>
+
+    <div class="results">
+        <h3>Results</h3>
+        <div id="results-content">
+            <p>Select an API and login to begin demonstration...</p>
+            <p><strong>Demo Credentials:</strong></p>
+            <ul>
+                <li>Teacher ID: teacher123 (or any teacherXXX format)</li>
+                <li>Password: password123</li>
+                <li>Students available: Alice Smith (alice123), Bob Johnson (bob456)</li>
+            </ul>
+            <p><strong>HTTPS Setup:</strong> Self-signed certificates will trigger browser warnings. Accept them to proceed with the CSRF demo.</p>
+        </div>
+    </div>
+
+    <div class="results" id="logout-actions" style="display: none;">
+        <h3>Logged in as:</h3>
+        <div id="login-content"></div>
+        <h3>Logout</h3>
+        <button onclick="logout()">Logout</button>
+    </div>    
+
+    <script>
+        let currentAPI = 'https://localhost:3001';
+        let csrfToken = null;
+        let isLoggedIn = false;
+        let studentsData = {};
+        let availableCoursesData = [];
+        let currentStudentData = null;
+
+        // Course definitions (should match server-side)
+        const courseDefinitions = {
+            'CS101': 'Computer Science I',
+            'MATH200': 'Calculus II', 
+            'ENG150': 'English Composition',
+            'PHYS150': 'Physics I',
+            'CS201': 'Data Structures',
+            'MATH300': 'Linear Algebra',
+            'PHYS200': 'Modern Physics',
+            'CHEM101': 'General Chemistry',
+            'ENG200': 'Advanced Composition',
+            'HIST101': 'World History'
+        };
+
+        function updateAPI() {
+            currentAPI = document.getElementById('api-select').value;
+            document.getElementById('results-content').innerHTML = `<p>Switched to: ${currentAPI}</p>`;
+        }
+
+        document.getElementById('api-select').addEventListener('change', updateAPI);
+
+        // Add event listener for student selection change
+        document.getElementById('target-student').addEventListener('change', function() {
+            updateStudentInfo();
+            updateCourseDropdowns();
+        });
+
+        async function login() {
+            const teacherId = document.getElementById('teacher-id').value;
+            const password = document.getElementById('password').value;
+            currentAPI = document.getElementById('api-select').value;
+
+            try {
+                const response = await fetch(`${currentAPI}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ teacherId, password })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    isLoggedIn = true;
+                    csrfToken = data.csrfToken; // May be undefined for vulnerable APIs
+                    document.getElementById('login-actions').style.display = 'none';
+                    document.getElementById('student-actions').style.display = 'block';
+                    document.getElementById('logout-actions').style.display = 'block';
+                    
+                    // Load students and courses data
+                    await loadStudentsAndCourses();
+                    
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="success">Teacher login successful - you can now manage student records</div>
+                    `;
+                    document.getElementById('login-content').innerHTML = `
+                        <div class="success">
+                            <p><strong>Teacher:</strong> ${data.teacher.name} (${data.teacher.teacherId})</p>
+                            <p><strong>Email:</strong> ${data.teacher.email}</p>
+                            <p><strong>HTTPS:</strong> Secure connection established</p>
+                            <p><strong>Cookie:</strong> Set with secure=true, sameSite=none</p>
+                            ${csrfToken ? `<p><strong>CSRF Token:</strong> ${csrfToken.substring(0, 16)}...</p>` : '<p class="warning">No CSRF Token - API is vulnerable to teacher account hijacking!</p>'}
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="error">Teacher login failed: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Network error: ${error.message}<br>
+                    <small>If you see SSL certificate errors, accept the self-signed certificate in your browser.</small></div>
+                `;
+            }
+        }
+
+        async function loadStudentsAndCourses() {
+            try {
+                // Load students
+                const studentsResponse = await fetch(`${currentAPI}/api/students`, {
+                    credentials: 'include'
+                });
+                const studentsResult = await studentsResponse.json();
+                
+                if (studentsResult.students) {
+                    studentsData = {};
+                    studentsResult.students.forEach(student => {
+                        studentsData[student.studentId] = student;
+                    });
+                    populateStudentDropdown();
+                }
+
+                // Load available courses
+                const coursesResponse = await fetch(`${currentAPI}/api/courses`, {
+                    credentials: 'include'
+                });
+                const coursesResult = await coursesResponse.json();
+                
+                if (coursesResult.availableCourses) {
+                    availableCoursesData = coursesResult.availableCourses;
+                }
+
+            } catch (error) {
+                console.error('Error loading students and courses:', error);
+            }
+        }
+
+        function populateStudentDropdown() {
+            const studentSelect = document.getElementById('target-student');
+            studentSelect.innerHTML = '<option value="">Select a student</option>';
+            
+            Object.values(studentsData).forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.studentId;
+                option.textContent = `${student.name} (${student.studentId})`;
+                studentSelect.appendChild(option);
+            });
+        }
+
+        async function updateStudentInfo() {
+            const selectedStudentId = document.getElementById('target-student').value;
+            const studentInfoDiv = document.getElementById('student-info');
+            
+            if (!selectedStudentId) {
+                studentInfoDiv.style.display = 'none';
+                currentStudentData = null;
+                return;
+            }
+
+            try {
+                // Get fresh student profile data
+                const response = await fetch(`${currentAPI}/api/profile?targetStudent=${selectedStudentId}`, {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                
+                if (data.student) {
+                    currentStudentData = data;
+                    studentsData[selectedStudentId] = data.student; // Update local cache
+                    
+                    studentInfoDiv.innerHTML = `
+                        <strong>${data.student.name}</strong><br>
+                        Email: ${data.student.email} | GPA: ${data.student.gpa} | Credits: ${data.student.credits}<br>
+                        <strong>Enrolled Courses:</strong> ${data.student.courses.map(courseId => 
+                            `${courseId} (${courseDefinitions[courseId] || courseId})`
+                        ).join(', ')}
+                    `;
+                    studentInfoDiv.style.display = 'block';
+                } else {
+                    studentInfoDiv.innerHTML = `<span class="error">Error loading student data</span>`;
+                    studentInfoDiv.style.display = 'block';
+                }
+            } catch (error) {
+                studentInfoDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+                studentInfoDiv.style.display = 'block';
+            }
+        }
+
+        function updateCourseDropdowns() {
+            const selectedStudentId = document.getElementById('target-student').value;
+            const gradeSelect = document.getElementById('course-grade');
+            const registerSelect = document.getElementById('register-course');
+            
+            if (!selectedStudentId || !studentsData[selectedStudentId]) {
+                gradeSelect.innerHTML = '<option value="">Select a student first</option>';
+                registerSelect.innerHTML = '<option value="">Select a student first</option>';
+                return;
+            }
+
+            const student = studentsData[selectedStudentId];
+            const enrolledCourses = student.courses || [];
+            
+            // Update grade dropdown with enrolled courses
+            gradeSelect.innerHTML = '';
+            if (enrolledCourses.length === 0) {
+                gradeSelect.innerHTML = '<option value="">Student not enrolled in any courses</option>';
+            } else {
+                enrolledCourses.forEach(courseId => {
+                    const option = document.createElement('option');
+                    option.value = courseId;
+                    const courseName = courseDefinitions[courseId] || courseId;
+                    const currentGrade = currentStudentData && currentStudentData.grades && currentStudentData.grades[courseId] 
+                        ? currentStudentData.grades[courseId] : 'No grade';
+                    option.textContent = `${courseId} - ${courseName} (Current: ${currentGrade})`;
+                    gradeSelect.appendChild(option);
+                });
+            }
+            
+            // Update registration dropdown with available courses (not enrolled)
+            registerSelect.innerHTML = '';
+            const availableCourses = availableCoursesData.filter(course => 
+                !enrolledCourses.includes(course.code)
+            );
+            
+            if (availableCourses.length === 0) {
+                registerSelect.innerHTML = '<option value="">No new courses available</option>';
+            } else {
+                availableCourses.forEach(course => {
+                    const option = document.createElement('option');
+                    option.value = course.code;
+                    option.textContent = `${course.code} - ${course.name}`;
+                    registerSelect.appendChild(option);
+                });
+            }
+        }
+
+        async function changeGrade() {
+            if (!isLoggedIn) {
+                alert('Please login as teacher first');
+                return;
+            }
+
+            const targetStudent = document.getElementById('target-student').value;
+            const course = document.getElementById('course-grade').value;
+            const newGrade = document.getElementById('new-grade').value;
+
+            if (!targetStudent || !course) {
+                alert('Please select a student and course');
+                return;
+            }
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (csrfToken) {
+                    headers['X-CSRF-Token'] = csrfToken;
+                }
+
+                const response = await fetch(`${currentAPI}/api/change-grade`, {
+                    method: 'POST',
+                    headers: headers,
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        targetStudent: targetStudent,
+                        course: course, 
+                        newGrade: newGrade 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="success">
+                            <h4>Grade Update Successful</h4>
+                            <p>Updated ${targetStudent}'s grade: ${data.message}</p>
+                            <p><strong>Academic Action:</strong> Teacher successfully modified student record</p>
+                            <p><strong>Security:</strong> Request sent over HTTPS with secure cookies</p>
+                        </div>
+                    `;
+                    
+                    // Refresh student info and course dropdowns
+                    await updateStudentInfo();
+                    updateCourseDropdowns();
+                } else {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="error">
+                            <h4>Grade Update Failed</h4>
+                            <p>${data.error}</p>
+                            ${data.attack_blocked ? '<p class="warning">CSRF Attack Blocked - Teacher account protected!</p>' : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function registerCourse() {
+            if (!isLoggedIn) {
+                alert('Please login as teacher first');
+                return;
+            }
+
+            const targetStudent = document.getElementById('target-student').value;
+            const courseCode = document.getElementById('register-course').value;
+
+            if (!targetStudent || !courseCode) {
+                alert('Please select a student and course');
+                return;
+            }
+
+            try {
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+                
+                if (csrfToken) {
+                    headers['X-CSRF-Token'] = csrfToken;
+                }
+
+                const response = await fetch(`${currentAPI}/api/register-course`, {
+                    method: 'POST',
+                    headers: headers,
+                    credentials: 'include',
+                    body: JSON.stringify({ 
+                        targetStudent: targetStudent,
+                        courseCode: courseCode 
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="success">
+                            <h4>Student Enrollment Successful</h4>
+                            <p>Enrolled ${targetStudent}: ${data.message}</p>
+                            <p><strong>Student's New Credit Count:</strong> ${data.newCreditCount}</p>
+                            <p><strong>Academic Action:</strong> Teacher successfully enrolled student</p>
+                            <p><strong>Security:</strong> Request sent over HTTPS with secure cookies</p>
+                        </div>
+                    `;
+                    
+                    // Refresh student data and update all dropdowns
+                    await updateStudentInfo();
+                    updateCourseDropdowns();
+                } else {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="error">
+                            <h4>Student Enrollment Failed</h4>
+                            <p>${data.error}</p>
+                            ${data.attack_blocked ? '<p class="warning">CSRF Attack Blocked - Teacher account protected!</p>' : ''}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function getProfile() {
+            if (!isLoggedIn) {
+                alert('Please login as teacher first');
+                return;
+            }
+
+            const targetStudent = document.getElementById('target-student').value;
+
+            if (!targetStudent) {
+                alert('Please select a student');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${currentAPI}/api/profile?targetStudent=${targetStudent}`, {
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+                
+                if (data.student) {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="success">
+                            <h4>Student Profile: ${data.student.name}</h4>
+                            <p><strong>Student ID:</strong> ${data.student.studentId}</p>
+                            <p><strong>Email:</strong> ${data.student.email}</p>
+                            <p><strong>GPA:</strong> ${data.student.gpa}</p>
+                            <p><strong>Credits:</strong> ${data.student.credits}</p>
+                            <p><strong>Enrolled Courses:</strong> ${data.student.courses.join(', ')}</p>
+                            <h5>Current Grades (Teacher View):</h5>
+                            <pre>${JSON.stringify(data.grades, null, 2)}</pre>
+                            <p><strong>Security:</strong> Data retrieved over HTTPS with secure session</p>
+                            <p><em>Teacher has full administrative access to modify these records</em></p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('results-content').innerHTML = `
+                        <div class="error">Failed to get student profile: ${data.error}</div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function checkStatus() {
+            currentAPI = document.getElementById('api-select').value;
+
+            try {
+                const response = await fetch(`${currentAPI}/api/status`);
+                const data = await response.json();
+                
+                document.getElementById('results-content').innerHTML = `
+                    <div>
+                        <h4>Teacher Portal API Status: ${currentAPI}</h4>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p><em>This shows the security configuration protecting teacher accounts and student data</em></p>
+                        <p><strong>HTTPS Status:</strong> ${currentAPI.startsWith('https') ? 'Encrypted' : 'Unencrypted'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Cannot connect to teacher portal ${currentAPI}: ${error.message}<br>
+                    <small>If using HTTPS, make sure to accept the self-signed certificate.</small></div>
+                `;
+            }
+        }
+
+        async function logout() {
+            if (!isLoggedIn) {
+                return;
+            }
+
+            try {
+                await fetch(`${currentAPI}/api/logout`, {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+                
+                isLoggedIn = false;
+                csrfToken = null;
+                studentsData = {};
+                availableCoursesData = [];
+                currentStudentData = null;
+                
+                document.getElementById('student-actions').style.display = 'none';
+                document.getElementById('logout-actions').style.display = 'none';
+                document.getElementById('results-content').innerHTML = `
+                    <div class="success">Teacher logged out successfully - secure session terminated</div>
+                `;
+                document.getElementById('login-actions').style.display = 'block';
+                
+                // Reset dropdowns
+                document.getElementById('target-student').innerHTML = '<option value="">Login required</option>';
+                document.getElementById('course-grade').innerHTML = '<option value="">Login required</option>';
+                document.getElementById('register-course').innerHTML = '<option value="">Login required</option>';
+                document.getElementById('student-info').style.display = 'none';
+            } catch (error) {
+                document.getElementById('results-content').innerHTML = `
+                    <div class="error">Logout error: ${error.message}</div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
