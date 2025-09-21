@@ -1,5 +1,3 @@
-Here's a cleaned up and simplified version of your README:
-
 # CSRF Security Demonstration Lab
 
 ## Overview
