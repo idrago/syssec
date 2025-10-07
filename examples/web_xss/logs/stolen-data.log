@@ -2,3 +2,16 @@
 [2025-09-27T16:04:13.023Z] POST_DATA from ::ffff:172.20.0.1: {}
 [2025-09-27T16:04:13.026Z] POST_DATA from ::ffff:172.20.0.1: {}
 [2025-09-27T16:04:13.028Z] POST_DATA from ::ffff:172.20.0.1: {}
+[2025-09-30T13:43:59.126Z] KEYSTROKES from ::ffff:172.19.0.1: {"key":"c"}
+[2025-09-30T13:43:59.536Z] KEYSTROKES from ::ffff:172.19.0.1: {"key":"i"}
+[2025-09-30T13:43:59.912Z] KEYSTROKES from ::ffff:172.19.0.1: {"key":"a"}
+[2025-09-30T13:44:00.206Z] KEYSTROKES from ::ffff:172.19.0.1: {"key":"o"}
+[2025-09-30T13:47:43.801Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:47:43.848Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:47:43.877Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:47:43.892Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:49:55.040Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:50:09.802Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:50:11.704Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:50:13.644Z] COOKIES from ::ffff:172.19.0.1: {"cookies":"sessionId=abc123def456; userId=12345; role=student","userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
+[2025-09-30T13:50:27.967Z] COOKIES from ::ffff:172.19.0.1: {"userAgent":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36","referer":"https://localhost:8001/"}
