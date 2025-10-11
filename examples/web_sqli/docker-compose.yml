@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  service1:
+    build: ./service1
+    image: service1
+    container_name: service1
+    tty: true
+    init: true
+    ports:
+      - 8081:80
+    restart: unless-stopped
+    command: bash -c "php -S 0.0.0.0:80 && tail -f /dev/null"            
+    depends_on:
+      - service1_database
+
+  service1_database:
+    image: mysql:5.7
+    container_name: db_service_service1
+    hostname: db_service_service1
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./service1/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  service2:
+    build: ./service2
+    image: service2
+    container_name: service2
+    hostname: service2
+    tty: true
+    init: true
+    ports:
+      - 8082:80
+    restart: unless-stopped
+    volumes:
+      - ./service2/flag.txt:/flag.txt      
+    depends_on:
+      - service2_database    
+
+  service2_database:
+    build: ./service2_db
+    image: db_service_service2
+    container_name: db_service_service2
+    command: --default-authentication-plugin=mysql_native_password
+    tty: true
+    restart: unless-stopped
+    cap_add:
+      - SYS_NICE
