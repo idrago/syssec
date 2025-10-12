@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: Vulnerable (No Protection)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .header {
+            background: #dc3545;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .test-container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #dc3545;
+            border-radius: 4px;
+            background: white;
+        }
+        .warning-box {
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        .btn-opacity {
+            background: #ffc107;
+            color: #1a1a1a;
+        }
+        .btn-reset {
+            background: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Lab</a>
+
+    <div class="header">
+        <h1>Testing Vulnerable Site (No Protection)</h1>
+        <p>Loading unprotected site (port 8081) - NO clickjacking defenses</p>
+    </div>
+
+    <div class="test-container">
+        <h2>Successful Attack:</h2>
+        <p>The vulnerable bank site loads successfully in the iframe below.</p>
+        
+        <iframe id="vulnerable-frame" src="http://localhost:8081"></iframe>
+
+        <div class="warning-box">
+            <strong>VULNERABLE:</strong> The iframe loaded successfully! This site has no protection against clickjacking attacks.
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Interactive Demo:</h2>
+        <p>Use these controls to simulate clickjacking attacks:</p>
+
+        <button class="btn-opacity" onclick="toggleOpacity()">Toggle Transparency</button>
+        <button class="btn-reset" onclick="resetIframe()">Reset</button>
+
+        <p id="status-message" style="color: #ffc107; margin-top: 10px;"></p>
+
+        <h3>What You Can Do:</h3>
+        <ul>
+            <li>Make the iframe semi-transparent to see how overlay attacks work</li>
+            <li>Imagine placing attractive content behind the transparent iframe</li>
+            <li>Users would think they're clicking your content, but actually interact with the bank</li>
+        </ul>
+    </div>
+
+    <div class="test-container">
+        <h2>Missing Security Headers:</h2>
+        <p style="color: #dc3545;">X-Frame-Options: Not Present</p>
+        <p style="color: #dc3545;">Content-Security-Policy (frame-ancestors): Not Present</p>
+        
+        <h3>Compare with Protected Versions:</h3>
+        <a href="test-xframe.html" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 5px;">
+            Test X-Frame-Options
+        </a>
+        <a href="test-csp.html" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 5px;">
+            Test CSP Protection
+        </a>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('vulnerable-frame');
+        const statusMsg = document.getElementById('status-message');
+        let isTransparent = false;
+
+        iframe.addEventListener('load', function() {
+            console.log('Vulnerable site loaded successfully in iframe');
+            statusMsg.textContent = 'Site loaded - ready for demonstration';
+            statusMsg.style.color = '#28a745';
+        });
+
+        function toggleOpacity() {
+            isTransparent = !isTransparent;
+            if (isTransparent) {
+                iframe.style.opacity = '0.3';
+                iframe.style.border = '2px dashed #ffc107';
+                statusMsg.textContent = 'Iframe is now semi-transparent - imagine placing attractive content behind it!';
+                statusMsg.style.color = '#ffc107';
+            } else {
+                iframe.style.opacity = '1';
+                iframe.style.border = '2px solid #dc3545';
+                statusMsg.textContent = 'Iframe returned to normal visibility';
+                statusMsg.style.color = '#28a745';
+            }
+        }
+
+        function resetIframe() {
+            iframe.style.opacity = '1';
+            iframe.style.border = '2px solid #dc3545';
+            isTransparent = false;
+            statusMsg.textContent = 'Reset complete';
+            statusMsg.style.color = '#6c757d';
+        }
+    </script>
+</body>
+</html>

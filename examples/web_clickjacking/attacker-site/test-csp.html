@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: CSP frame-ancestors Protection</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .header {
+            background: #007bff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .test-container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #007bff;
+            border-radius: 4px;
+            background: white;
+        }
+        .info-box {
+            background: #17a2b8;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .console-output {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            border: 1px solid #444;
+        }
+        .error {
+            color: #dc3545;
+        }
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #444;
+        }
+        th {
+            background: #333;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Lab</a>
+
+    <div class="header">
+        <h1>Testing CSP frame-ancestors Protection</h1>
+        <p>Attempting to load protected site (port 8083) with <code>Content-Security-Policy: frame-ancestors 'self'</code></p>
+    </div>
+
+    <div class="test-container">
+        <h2>Attack Attempt:</h2>
+        <p>Trying to load the CSP-protected bank site in an iframe...</p>
+        
+        <iframe id="protected-frame" src="http://localhost:8083"></iframe>
+
+        <div class="info-box">
+            <strong>Expected Result:</strong> The iframe should be blocked by CSP.
+            Open your browser's Developer Console (F12) to see the CSP violation message.
+        </div>
+
+        <div class="console-output">
+            <strong>Expected Console Error:</strong><br>
+            <span class="error">
+            Refused to frame 'http://localhost:8083/' because an ancestor violates the following Content Security Policy directive: "frame-ancestors 'self'".
+            </span>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>Understanding CSP frame-ancestors:</h2>
+        
+        <p>CSP (Content Security Policy) is the modern replacement for X-Frame-Options.</p>
+
+        <h3>Common Directives:</h3>
+        <table>
+            <tr>
+                <th>Directive</th>
+                <th>Effect</th>
+            </tr>
+            <tr>
+                <td><code>frame-ancestors 'none'</code></td>
+                <td>Equivalent to X-Frame-Options: DENY</td>
+            </tr>
+            <tr>
+                <td><code>frame-ancestors 'self'</code></td>
+                <td>Equivalent to X-Frame-Options: SAMEORIGIN</td>
+            </tr>
+            <tr>
+                <td><code>frame-ancestors 'self' example.com</code></td>
+                <td>Allow framing from same origin and example.com</td>
+            </tr>
+            <tr>
+                <td><code>frame-ancestors https://trusted.com</code></td>
+                <td>Allow framing only from trusted.com</td>
+            </tr>
+        </table>
+
+        <h3>Response Header:</h3>
+        <div class="console-output">
+            Content-Security-Policy: frame-ancestors 'self'
+        </div>
+
+        <h3>Why CSP is Better than X-Frame-Options:</h3>
+        <ul>
+            <li>More granular control - can whitelist multiple specific origins</li>
+            <li>Part of the comprehensive CSP standard</li>
+            <li>Better browser support in modern browsers</li>
+            <li>More flexible syntax</li>
+        </ul>
+
+        <h3>Testing Instructions:</h3>
+        <ol>
+            <li>Open Browser DevTools (F12)</li>
+            <li>Go to the Console tab</li>
+            <li>Look for the CSP violation error</li>
+            <li>Go to the Network tab</li>
+            <li>Find the request to localhost:8083</li>
+            <li>Check Response Headers - find the <code>Content-Security-Policy</code> header</li>
+        </ol>
+    </div>
+
+    <div class="test-container">
+        <h2>Comparison: X-Frame-Options vs CSP</h2>
+        
+        <table>
+            <tr>
+                <th>Feature</th>
+                <th>X-Frame-Options</th>
+                <th>CSP frame-ancestors</th>
+            </tr>
+            <tr>
+                <td>Standard</td>
+                <td>Older (RFC 7034)</td>
+                <td>Modern (CSP Level 2+)</td>
+            </tr>
+            <tr>
+                <td>Multiple Origins</td>
+                <td>No</td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td>Recommended</td>
+                <td>Legacy compatibility</td>
+                <td>Primary defense</td>
+            </tr>
+        </table>
+
+        <h3>Best Practice:</h3>
+        <div class="info-box">
+            Use both for maximum compatibility:<br><br>
+            <code>X-Frame-Options: DENY</code><br>
+            <code>Content-Security-Policy: frame-ancestors 'none'</code>
+        </div>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('protected-frame');
+        
+        iframe.addEventListener('load', function() {
+            console.log('Iframe load event fired');
+        });
+
+        iframe.addEventListener('error', function() {
+            console.error('Iframe failed to load due to CSP frame-ancestors');
+        });
+
+        console.log('Attempting to load CSP-protected site');
+        console.log('Target: http://localhost:8083');
+        console.log('CSP: frame-ancestors \'self\'');
+        console.log('Expected: Browser should block the iframe');
+    </script>
+</body>
+</html>

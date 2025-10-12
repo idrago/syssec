@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test: X-Frame-Options Protection</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        .header {
+            background: #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .back-link {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            color: white;
+            margin-bottom: 10px;
+        }
+        .test-container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #28a745;
+            border-radius: 4px;
+            background: white;
+        }
+        .info-box {
+            background: #ffc107;
+            color: #1a1a1a;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+        .console-output {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 20px;
+            border: 1px solid #444;
+        }
+        .error {
+            color: #dc3545;
+        }
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back to Lab</a>
+
+    <div class="header">
+        <h1>Testing X-Frame-Options Protection</h1>
+        <p>Attempting to load protected site (port 8082) with <code>X-Frame-Options: DENY</code></p>
+    </div>
+
+    <div class="test-container">
+        <h2>Attack Attempt:</h2>
+        <p>Trying to load the protected bank site in an iframe...</p>
+        
+        <iframe id="protected-frame" src="http://localhost:8082"></iframe>
+
+        <div class="info-box">
+            <strong>Expected Result:</strong> The iframe should be blocked by the browser.
+            Open your browser's Developer Console (F12) to see the security error message.
+        </div>
+
+        <div class="console-output">
+            <strong>Expected Console Error:</strong><br>
+            <span class="error">
+            Refused to display 'http://localhost:8082/' in a frame because it set 'X-Frame-Options' to 'deny'.
+            </span>
+        </div>
+    </div>
+
+    <div class="test-container">
+        <h2>How X-Frame-Options Works:</h2>
+        <ul>
+            <li><strong>DENY:</strong> Page cannot be displayed in a frame, regardless of the site</li>
+            <li><strong>SAMEORIGIN:</strong> Page can only be displayed in a frame on the same origin</li>
+        </ul>
+
+        <h3>Response Header:</h3>
+        <div class="console-output">
+            X-Frame-Options: DENY
+        </div>
+
+        <h3>Testing Instructions:</h3>
+        <ol>
+            <li>Open Browser DevTools (F12)</li>
+            <li>Go to the Console tab</li>
+            <li>Look for the X-Frame-Options violation error</li>
+            <li>Go to the Network tab</li>
+            <li>Find the request to localhost:8082</li>
+            <li>Check the Response Headers - you should see <code>X-Frame-Options: DENY</code></li>
+        </ol>
+
+        <h3>Comparison Test:</h3>
+        <a href="test-vulnerable.html" style="color: #ff4b2b; text-decoration: underline;">
+            Test Vulnerable Site (No Protection)
+        </a>
+    </div>
+
+    <script>
+        const iframe = document.getElementById('protected-frame');
+        
+        iframe.addEventListener('load', function() {
+            console.log('Iframe load event fired');
+        });
+
+        iframe.addEventListener('error', function() {
+            console.error('Iframe failed to load due to X-Frame-Options');
+        });
+
+        console.log('Attempting to load protected site with X-Frame-Options: DENY');
+        console.log('Target: http://localhost:8082');
+        console.log('Expected: Browser should block the iframe');
+    </script>
+</body>
+</html>

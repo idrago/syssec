@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attack 1: Like-Jacking</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .attack-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+        }
+        #decoy {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+        #decoy h1 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 36px;
+        }
+        #decoy p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .fake-button {
+            background: #667eea;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        #victim-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 800px;
+            height: 1500px;
+            border: none;
+            opacity: 0;
+            z-index: 2;
+            pointer-events: auto;
+        }
+        .info-banner {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            z-index: 1000;
+            font-size: 14px;
+        }
+        .back-link {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #667eea;
+            font-weight: bold;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">Back</a>
+    
+    <div class="info-banner">
+        ATTACK 1: Like-Jacking | Press 'D' to toggle iframe visibility
+    </div>
+
+    <div class="attack-container">
+        <div id="decoy">
+            <h1>Congratulations!</h1>
+            <p>You've won a FREE vacation to Hawaii!</p>
+            <button class="fake-button">Click Here to Claim Prize!</button>
+        </div>
+
+        <iframe id="victim-iframe" src="http://localhost:8081"></iframe>
+    </div>
+
+    <script>
+        let showing = false;
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'd' || e.key === 'D') {
+                showing = !showing;
+                const iframe = document.getElementById('victim-iframe');
+                iframe.style.opacity = showing ? '0.5' : '0';
+                iframe.style.border = showing ? '2px solid red' : 'none';
+            }
+        });
+
+        console.log('Press "D" to toggle iframe visibility');
+    </script>
+</body>
+</html>

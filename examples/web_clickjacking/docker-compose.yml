@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  bank-vulnerable:
+    build: ./bank-site
+    ports:
+      - "8081:80"
+    environment:
+      - PROTECTION=none
+
+  bank-xframe:
+    build: ./bank-site
+    ports:
+      - "8082:80"
+    environment:
+      - PROTECTION=xframe
+
+  bank-csp:
+    build: ./bank-site
+    ports:
+      - "8083:80"
+    environment:
+      - PROTECTION=csp
+
+  attacker:
+    build: ./attacker-site
+    ports:
+      - "8080:80"
