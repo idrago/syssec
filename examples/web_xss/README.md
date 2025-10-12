@@ -14,7 +14,7 @@ This lab demonstrates XSS vulnerabilities using two sites:
    ```
 
 2. **Install CA Certificate**
-   - Install `./certs/ca.crt` in your browser to avoid SSL warnings
+   - Install `./certs/ca.crt` in your browser to avoid SSL warnings if you like
 
 3. **Access Sites**
    - Vulnerable Site: https://localhost:8001

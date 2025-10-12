@@ -19,7 +19,7 @@ services:
     image: mysql:5.7
     container_name: db_service_service1
     hostname: db_service_service1
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
     volumes:
