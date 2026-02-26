@@ -97,15 +97,7 @@ let grades = {
   'bob456': { 'CS101': 'B', 'PHYS150': 'B-' }
 };
 
-// Available courses catalog
-const availableCourses = [
-  { code: 'CS201', name: 'Data Structures' },
-  { code: 'MATH300', name: 'Linear Algebra' },
-  { code: 'PHYS200', name: 'Modern Physics' },
-  { code: 'CHEM101', name: 'General Chemistry' },
-  { code: 'ENG200', name: 'Advanced Composition' },
-  { code: 'HIST101', name: 'World History' }
-];
+
 
 // Authentication endpoint
 app.post('/api/login', (req, res) => {
@@ -171,43 +163,6 @@ app.post('/api/change-grade', (req, res) => {
   }
 });
 
-// VULNERABLE: Register for course without CSRF protection
-app.post('/api/register-course', (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
-  const { courseCode, targetStudent } = req.body;
-  
-  let targetStudentId;
-  if (sessionData.userType === 'teacher' && targetStudent) {
-    targetStudentId = targetStudent;
-  } else {
-    return res.status(400).json({ error: 'Invalid request - missing target student' });
-  }
-  
-  if (students[targetStudentId] && !students[targetStudentId].courses.includes(courseCode)) {
-    students[targetStudentId].courses.push(courseCode);
-    students[targetStudentId].credits += 3;
-    grades[targetStudentId][courseCode] = 'IP'; // In Progress
-    
-    console.log(`[VULNERABLE-UNIVERSITY-API] COURSE REGISTRATION: ${sessionData.userId} (${sessionData.userType}) registered ${targetStudentId} for ${courseCode}`);
-    console.log(`[VULNERABLE-UNIVERSITY-API] Origin: ${req.headers.origin || 'No Origin'}`);
-    
-    res.json({ 
-      success: true, 
-      message: `Successfully registered for ${courseCode}`,
-      newCreditCount: students[targetStudentId].credits,
-      targetStudent: targetStudentId
-    });
-  } else {
-    res.status(400).json({ error: 'Already registered for this course or student not found' });
-  }
-});
-
 // Get all students (for dropdowns)
 app.get('/api/students', (req, res) => {
   const sessionId = req.cookies.teacherSession;
@@ -222,48 +177,6 @@ app.get('/api/students', (req, res) => {
   res.json({ 
     students: studentList
   });
-});
-
-// Get available courses
-app.get('/api/courses', (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  res.json({ 
-    availableCourses: availableCourses
-  });
-});
-
-// Get student profile
-app.get('/api/profile', (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
-  const targetStudent = req.query.targetStudent;
-  let targetStudentId;
-  
-  if (sessionData.userType === 'teacher' && targetStudent) {
-    targetStudentId = targetStudent;
-  } else {
-    return res.status(400).json({ error: 'Invalid request - missing target student' });
-  }
-  
-  if (students[targetStudentId]) {
-    res.json({ 
-      student: students[targetStudentId],
-      grades: grades[targetStudentId]
-    });
-  } else {
-    res.status(404).json({ error: 'Student not found' });
-  }
 });
 
 // Get grades
@@ -294,29 +207,6 @@ app.get('/api/grades', (req, res) => {
   }
 });
 
-// API status
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    api: 'vulnerable-api',
-    protection: 'none',
-    cors: 'misconfigured (*)',
-    csrf: 'none',
-    cookies: 'sameSite: none + secure (vulnerable to CSRF)',
-    https: 'enabled with shared CA',
-    warning: 'This portal is intentionally vulnerable to CSRF',
-    endpoints: [
-      'POST /api/login',
-      'POST /api/change-grade (VULNERABLE)',
-      'POST /api/register-course (VULNERABLE)', 
-      'GET /api/students',
-      'GET /api/courses',
-      'GET /api/profile',
-      'GET /api/grades',
-      'POST /api/logout'
-    ]
-  });
-});
-
 // Logout
 app.post('/api/logout', (req, res) => {
   const sessionId = req.cookies.teacherSession;
@@ -343,19 +233,8 @@ try {
   
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`Vulnerable API running on HTTPS port ${PORT}`);
-    console.log(`Access at: https://localhost:${PORT}`);
-    console.log('Security: DISABLED - This portal is intentionally vulnerable to CSRF');
-    console.log('SSL: Using shared Certificate Authority');
-    console.log('Demo accounts:');
-    console.log('  Teachers: teacher123/password123');
-    console.log('');
-    console.log('CSRF Configuration: sameSite=none + secure=true (vulnerable)');
-    console.log('Available endpoints:');
-    console.log('  GET /api/students - List all students');
-    console.log('  GET /api/courses - List available courses');
-    console.log('  GET /api/profile?targetStudent=X - Get student profile');
-    console.log('  POST /api/change-grade - VULNERABLE to CSRF');
-    console.log('  POST /api/register-course - VULNERABLE to CSRF');
+    console.log(`CORS: misconfigured (echoes any Origin)`);
+    console.log(`Cookies: sameSite=none, secure=true`);
   });
   
 } catch (error) {

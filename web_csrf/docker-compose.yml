@@ -18,24 +18,6 @@ services:
         echo 'Certificate generation complete.'"
     container_name: cert-generator
 
-  no-cors-api:
-    build:
-      context: ./services/no-cors-api
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-    volumes:
-      - ./logs:/app/logs
-      - shared-certs:/app/ssl:ro
-    depends_on:
-      cert-generator:
-        condition: service_completed_successfully
-    container_name: no-cors-api
-    restart: unless-stopped
-
   vulnerable-api:
     build:
       context: ./services/vulnerable-api
@@ -98,7 +80,6 @@ services:
       - "8001:443"
     volumes:
       - ./services/teacher-portal/index.html:/usr/share/nginx/html/index.html:ro
-      - ./services/teacher-portal/legacy.html:/usr/share/nginx/html/legacy.html:ro
       - shared-certs:/etc/nginx/ssl:ro
     depends_on:
       cert-generator:

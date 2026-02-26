@@ -98,14 +98,7 @@ let grades = {
   'bob456': { 'CS101': 'B', 'PHYS150': 'B-' }
 };
 
-const availableCourses = [
-  { code: 'CS201', name: 'Data Structures' },
-  { code: 'MATH300', name: 'Linear Algebra' },
-  { code: 'PHYS200', name: 'Modern Physics' },
-  { code: 'CHEM101', name: 'General Chemistry' },
-  { code: 'ENG200', name: 'Advanced Composition' },
-  { code: 'HIST101', name: 'World History' }
-];
+
 
 // Generate cryptographically secure CSRF token
 function generateCSRFToken() {
@@ -198,37 +191,6 @@ app.post('/api/change-grade', requireCSRFToken, (req, res) => {
   }
 });
 
-// PROTECTED: Register for course with CSRF protection
-app.post('/api/register-course', requireCSRFToken, (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  const { courseCode, targetStudent } = req.body;
-  
-  let targetStudentId;
-  if (sessionData.userType === 'teacher' && targetStudent) {
-    targetStudentId = targetStudent;
-  } else {
-    return res.status(400).json({ error: 'Invalid request - missing target student' });
-  }
-  
-  if (students[targetStudentId] && !students[targetStudentId].courses.includes(courseCode)) {
-    students[targetStudentId].courses.push(courseCode);
-    students[targetStudentId].credits += 3;
-    grades[targetStudentId][courseCode] = 'IP'; // In Progress
-
-    res.json({ 
-      success: true, 
-      message: `Successfully registered for ${courseCode}`,
-      newCreditCount: students[targetStudentId].credits,
-      targetStudent: targetStudentId,
-      protection: 'csrf-protected'
-    });
-  } else {
-    res.status(400).json({ error: 'Already registered for this course or student not found' });
-  }
-});
-
 // Get all students (authentication required but no CSRF for GET)
 app.get('/api/students', (req, res) => {
   const sessionId = req.cookies.teacherSession;
@@ -242,48 +204,6 @@ app.get('/api/students', (req, res) => {
   res.json({ 
     students: studentList
   });
-});
-
-// Get available courses
-app.get('/api/courses', (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-
-  res.json({ 
-    availableCourses: availableCourses
-  });
-});
-
-// Get student profile
-app.get('/api/profile', (req, res) => {
-  const sessionId = req.cookies.teacherSession;
-  const sessionData = sessions[sessionId];
-  
-  if (!sessionData) {
-    return res.status(401).json({ error: 'Not authenticated' });
-  }
-  
-  const targetStudent = req.query.targetStudent;
-  let targetStudentId;
-  
-  if (sessionData.userType === 'teacher' && targetStudent) {
-    targetStudentId = targetStudent;
-  } else {
-    return res.status(400).json({ error: 'Invalid request - missing target student' });
-  }
-  
-  if (students[targetStudentId]) {
-    res.json({ 
-      student: students[targetStudentId],
-      grades: grades[targetStudentId]
-    });
-  } else {
-    res.status(404).json({ error: 'Student not found' });
-  }
 });
 
 // Get grades
@@ -314,38 +234,8 @@ app.get('/api/grades', (req, res) => {
   }
 });
 
-// API status
-app.get('/api/status', (req, res) => {
-  res.json({ 
-    api: 'protected-api',
-    protection: 'FULL - CSRF + CORS',
-    cors: 'restricted-origins',
-    csrf: 'REQUIRED - cryptographic tokens',
-    cookies: 'SECURE - httpOnly + sameSite: strict + secure',
-    https: 'enabled with shared CA',
-    allowedOrigins: allowedOrigins,
-    security: {
-      csrfTokens: 'Required for all state-changing operations',
-      cookiePolicy: 'httpOnly + secure + sameSite=strict',
-      originValidation: 'Strict allowlist enforcement',
-      sessionSecurity: 'Cryptographically secure session IDs',
-      tokenGeneration: 'crypto.randomBytes(32)'
-    },
-    endpoints: [
-      'POST /api/login',
-      'POST /api/change-grade (CSRF-PROTECTED)',
-      'POST /api/register-course (CSRF-PROTECTED)', 
-      'GET /api/students',
-      'GET /api/courses',
-      'GET /api/profile',
-      'GET /api/grades',
-      'POST /api/logout'
-    ]
-  });
-});
-
-// Logout (CSRF protection for logout too)
-app.post('/api/logout', requireCSRFToken, (req, res) => {
+// Logout (no CSRF required — just clears the session)
+app.post('/api/logout', (req, res) => {
   const sessionId = req.cookies.teacherSession;
   
   if (sessions[sessionId]) {
@@ -384,21 +274,10 @@ try {
   const server = https.createServer(sslOptions, app);
   
   server.listen(PORT, '0.0.0.0', () => {
-    console.log(`Protected  API running on HTTPS port ${PORT}`);
-    console.log(`Access at: https://localhost:${PORT}`);
-    console.log('');
-    console.log('Security: CSRF + CORS + Secure Cookies');
-    console.log('CORS: Restricted to specific allowed origins only');
-    console.log('CSRF: Required cryptographic tokens for all state changes');
-    console.log('Cookies: httpOnly + secure + sameSite=strict');
-    console.log('Sessions: Cryptographically secure with automatic cleanup');
-    console.log('Available endpoints (PROTECTED):');
-    console.log('  GET /api/students - Authenticated access only');
-    console.log('  GET /api/courses - List available courses');
-    console.log('  GET /api/profile?targetStudent=X - Get student profile');
-    console.log('  POST /api/change-grade - CSRF-PROTECTED');
-    console.log('  POST /api/register-course - CSRF-PROTECTED');
-    console.log('  POST /api/logout - CSRF-PROTECTED');
+    console.log(`Protected API running on HTTPS port ${PORT}`);
+    console.log(`CORS: restricted to ${allowedOrigins.join(', ')}`);
+    console.log(`Cookies: httpOnly=true, sameSite=strict, secure=true`);
+    console.log(`CSRF: X-CSRF-Token required on state-changing requests`);
   });
   
 } catch (error) {
