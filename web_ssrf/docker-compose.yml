@@ -43,7 +43,7 @@ services:
       sh -c "yum install -y nmap-ncat &&
             echo 'Waiting for reverse shell connections on port 4444...' &&
             while true; do
-              ncat -lvp 4444     # <- listen-only, no -c or -e
+              ncat -lvp 4444 | tee /tmp/received.txt
               echo 'Connection closed. Listening again...';
               sleep 1;
             done"
