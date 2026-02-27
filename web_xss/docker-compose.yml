@@ -27,7 +27,7 @@ services:
       - shared-certs:/etc/ssl/private:ro
     depends_on:
       cert-generator:
-        condition: service_completed_successfully
+        condition: service_started
     container_name: vulnerable-site
     restart: unless-stopped
 
@@ -45,7 +45,7 @@ services:
       - shared-certs:/app/ssl:ro
     depends_on:
       cert-generator:
-        condition: service_completed_successfully
+        condition: service_started
     container_name: attacker-site
     restart: unless-stopped
 

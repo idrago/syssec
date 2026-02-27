@@ -4,9 +4,9 @@ FROM php:8.1-apache
 RUN a2enmod ssl rewrite
 
 # Install additional packages if needed
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y \
+#     openssl \
+#     && rm -rf /var/lib/apt/lists/*
 
 # Copy website files
 COPY . /var/www/html/
